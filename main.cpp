@@ -5,6 +5,9 @@
 #include <map>
 #include <sstream>
 
+//Information/SampleCode for process memery handeling (in C#)
+//https://codingvision.net/c-how-to-scan-a-process-memory
+
 //Map of window handle and window name
 std::map<int, std::pair<HWND, std::string>> mapWinHndls;
 int numOfPairs=0;
@@ -56,12 +59,24 @@ bool processStuff(int selectedWin){
         GetWindowThreadProcessId(hndlWindow, &procId);       
         
         HANDLE hndlProc;
-        hndlProc = OpenProcess(PROCESS_VM_READ, true, procId);
+        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , true, procId);
         if(hndlWindow == NULL){
             std::cout << "Gettingg the handle failed."<< std::endl;
         }else{
             //Work within process
 
+            //Contains information about the current computer system.(processor/page size/other) 
+            //Used to determine first nad last used address in memory (lpMinimumApplicationAddress/lpMaximumApplicationAddress)
+            LPSYSTEM_INFO sysinfo;
+            GetSystemInfo(sysinfo);
+            //Get used required infos
+            DWORD pageSize = sysinfo->dwPageSize;
+            LPVOID startAdr=sysinfo->lpMinimumApplicationAddress;
+            LPVOID endAdr=sysinfo->lpMaximumApplicationAddress;
+
+            //Info about the momry pages used by the process 
+            PMEMORY_BASIC_INFORMATION lpBuffer = new MEMORY_BASIC_INFORMATION(); //information will be returned in there
+            VirtualQueryEx(hndlProc, startAdr, lpBuffer, sizeof(lpBuffer));
 
             //After being done, close the handle
             CloseHandle(hndlProc);
