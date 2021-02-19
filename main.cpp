@@ -75,8 +75,15 @@ bool processStuff(int selectedWin){
             LPVOID endAdr=sysinfo->lpMaximumApplicationAddress;
 
             //Info about the momry pages used by the process 
-            PMEMORY_BASIC_INFORMATION lpBuffer = new MEMORY_BASIC_INFORMATION(); //information will be returned in there
-            VirtualQueryEx(hndlProc, startAdr, lpBuffer, sizeof(lpBuffer));
+            PMEMORY_BASIC_INFORMATION lpBuffer = new MEMORY_BASIC_INFORMATION(); //page info that is returned
+            SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, lpBuffer, sizeof(lpBuffer));
+
+            if(numOfBytesPage==0){
+                std::cout << "Failed to get page informations." << std::endl;
+                exit(-1);
+            }else{
+                PVOID baseAddress = lpBuffer->BaseAddress;
+            }
 
             //After being done, close the handle
             CloseHandle(hndlProc);
