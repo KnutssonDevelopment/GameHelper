@@ -67,22 +67,37 @@ bool processStuff(int selectedWin){
 
             //Contains information about the current computer system.(processor/page size/other) 
             //Used to determine first nad last used address in memory (lpMinimumApplicationAddress/lpMaximumApplicationAddress)
-            LPSYSTEM_INFO sysinfo;
-            GetSystemInfo(sysinfo);
+            SYSTEM_INFO sysinfo;
+            GetSystemInfo(&sysinfo);
             //Get used required infos
-            DWORD pageSize = sysinfo->dwPageSize;
-            LPVOID startAdr=sysinfo->lpMinimumApplicationAddress;
-            LPVOID endAdr=sysinfo->lpMaximumApplicationAddress;
+            DWORD pageSize = sysinfo.dwPageSize;
+            long * startAdr=(long*)sysinfo.lpMinimumApplicationAddress;
+            long* endAdr=(long*)sysinfo.lpMaximumApplicationAddress;
+
+            //Here needs to start loop....
 
             //Info about the momry pages used by the process 
-            PMEMORY_BASIC_INFORMATION lpBuffer = new MEMORY_BASIC_INFORMATION(); //page info that is returned
-            SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, lpBuffer, sizeof(lpBuffer));
+            MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
+            SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, &lpBuffer, sizeof(lpBuffer));
 
+            //Check if function failed
             if(numOfBytesPage==0){
                 std::cout << "Failed to get page informations." << std::endl;
                 exit(-1);
             }else{
-                PVOID baseAddress = lpBuffer->BaseAddress;
+                LPVOID baseAddress = lpBuffer.BaseAddress;
+                SIZE_T regionSize = lpBuffer.RegionSize;
+                DWORD protection = lpBuffer.Protect; //access Protection
+                DWORD state = lpBuffer.State; //State of page
+                //Check if rights to access data
+                if(protection == PAGE_READONLY && state == MEM_COMMIT){
+                    //search through data region for the number
+                    //for(){ReadProcessMemory}
+                }
+
+                //Adjust starting address
+                startAdr+= sizeof(regionSize); 
+                
             }
 
             //After being done, close the handle
@@ -123,6 +138,7 @@ int main(){
     //Read what value to search
 
     //Search for the value
+    processStuff(select);
 
     //Read new value
 
