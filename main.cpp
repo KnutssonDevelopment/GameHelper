@@ -4,6 +4,7 @@
 #include <psapi.h>
 #include <map>
 #include <sstream>
+#include <vector>
 
 //Information/SampleCode for process memery handeling (in C#)
 //https://codingvision.net/c-how-to-scan-a-process-memory
@@ -74,32 +75,55 @@ bool processStuff(int selectedWin){
             long * startAdr=(long*)sysinfo.lpMinimumApplicationAddress;
             long* endAdr=(long*)sysinfo.lpMaximumApplicationAddress;
 
+            //List of addr where vlaue was found
+            std::vector<LPVOID> addresses;
             //Here needs to start loop....
+            while (startAdr < endAdr)
+            {
+                //Info about the momry pages used by the process
+                MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
+                SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, &lpBuffer, sizeof(lpBuffer));
 
-            //Info about the momry pages used by the process 
-            MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
-            SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, &lpBuffer, sizeof(lpBuffer));
-
-            //Check if function failed
-            if(numOfBytesPage==0){
-                std::cout << "Failed to get page informations." << std::endl;
-                exit(-1);
-            }else{
-                LPVOID baseAddress = lpBuffer.BaseAddress;
-                SIZE_T regionSize = lpBuffer.RegionSize;
-                DWORD protection = lpBuffer.Protect; //access Protection
-                DWORD state = lpBuffer.State; //State of page
-                //Check if rights to access data
-                if(protection == PAGE_READONLY && state == MEM_COMMIT){
-                    //search through data region for the number
-                    //for(){ReadProcessMemory}
+                //Check if function failed
+                if (numOfBytesPage == 0)
+                {
+                    std::cout << "Failed to get page informations." << std::endl;
+                    exit(-1);
                 }
+                else
+                {
+                    LPVOID baseAddress = lpBuffer.BaseAddress;
+                    SIZE_T regionSize = lpBuffer.RegionSize;
+                    DWORD protection = lpBuffer.Protect; //access Protection
+                    DWORD state = lpBuffer.State;        //State of page
+                    //Check if rights to access data
+                    if (protection == PAGE_READONLY && state == MEM_COMMIT)
+                    {
+                        //Get data 
+                        DWORD* data = new DWORD[sizeof(regionSize)]; 
+                        SIZE_T numOfBytesRead;
+                        int readSuccess = ReadProcessMemory(hndlProc, baseAddress, data, sizeof(regionSize), &numOfBytesRead);
+                        if(readSuccess!=0){
+                            //search through data region for the number
+                            for(int i=0;i<numOfBytesRead; ++i){
+                                DWORD value = data[i];
+                                
+                                //if searched value, then add to list
+                                if(value==10){
+                                    addresses.push_back((LPVOID)data[i]);
+                                    DWORD* data2 = new DWORD[sizeof(DWORD)];
+                                    SIZE_T numOfBytesRead2;
+                                    ReadProcessMemory(hndlProc, addresses.at(0), data2, sizeof(DWORD), &numOfBytesRead2);
+                                }
+                            }
+                        }
+                        free(data);
+                    }
 
-                //Adjust starting address
-                startAdr+= sizeof(regionSize); 
-                
+                    //Adjust starting address
+                    startAdr += sizeof(regionSize);
+                }
             }
-
             //After being done, close the handle
             CloseHandle(hndlProc);
         }
