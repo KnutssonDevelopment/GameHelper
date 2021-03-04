@@ -5,13 +5,19 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <cstring>
 
 //Information/SampleCode for process memery handeling (in C#)
 //https://codingvision.net/c-how-to-scan-a-process-memory
 
+//Memory analysis cmd for debug console(VSC does not have memory view like VS)
+//-exec x/1w *hex-address*
+//Options: x/1w -> num means how many, letter means type (w=4byte, b=1byte)
+//Thats why memcpy is used to interpret data in the desired data type
+
 //Map of window handle and window name
 std::map<int, std::pair<HWND, std::string>> mapWinHndls;
-int numOfPairs=0;
+int numOfPairs=0; //could be removed
 
 //Callback for EnumWindows-Method
 BOOL callbackEnumWindows(HWND hndl, LPARAM param){
@@ -43,8 +49,68 @@ void createWindowsList(){
     }
 }
 
-//
-bool processStuff(int selectedWin){
+//Test reading ability of one address(will be modified and reused later)
+void readOneValue(int selectedWin){
+    int* adr = (int*)0x00747778;
+    
+
+    //Continue only if list has items
+    if(mapWinHndls.size()==0)
+        return;
+
+    //Window handle, used to get process id
+    HWND hndlWindow = mapWinHndls[selectedWin].first;
+    if(hndlWindow==NULL){
+        std::cout << "No Window with that name found" << std::endl;
+
+    }else{
+        //get process id, used to access process
+        DWORD procId;
+        GetWindowThreadProcessId(hndlWindow, &procId);       
+        
+        HANDLE hndlProc;
+        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
+        if(hndlWindow == NULL){
+            std::cout << "Gettingg the handle failed."<< std::endl;
+        }else{
+            //Work within process
+
+            //Get data
+            int *data = new int();
+            memset(data, 0, sizeof(int));
+            SIZE_T numOfBytesRead;
+            int readSuccess = ReadProcessMemory(hndlProc, adr, data, sizeof(int), &numOfBytesRead);
+            if (readSuccess != 0 && numOfBytesRead > 0)
+            {
+                int value; //*data;
+                std::memcpy(&value, &data[0], sizeof(int)); 
+                std::cout << "memcpy: " << value << std::endl;
+                
+            }
+            delete[] data;
+
+            //After being done, close the handle
+            CloseHandle(hndlProc);
+           
+        }
+      
+    }
+    
+}
+
+//Move ptr adr by bytes(needs rework to work universally)
+void* incPtrByBytes(void* adr, unsigned long long numOfBytes){
+    char* tmp = (char*)adr;
+    tmp+=(sizeof(byte)*numOfBytes);
+    if(tmp==(void*)0x14b160000)
+    {
+        std::cout << "istNULL" << std::endl;
+    }
+    return (void*)tmp;
+}
+
+//Search for a certain value
+bool scanFirstIteration(int selectedWin){
     //Continue only if list has items
     if(mapWinHndls.size()==0)
         return false;
@@ -60,7 +126,7 @@ bool processStuff(int selectedWin){
         GetWindowThreadProcessId(hndlWindow, &procId);       
         
         HANDLE hndlProc;
-        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , true, procId);
+        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
         if(hndlWindow == NULL){
             std::cout << "Gettingg the handle failed."<< std::endl;
         }else{
@@ -71,18 +137,26 @@ bool processStuff(int selectedWin){
             SYSTEM_INFO sysinfo;
             GetSystemInfo(&sysinfo);
             //Get used required infos
-            DWORD pageSize = sysinfo.dwPageSize;
-            long * startAdr=(long*)sysinfo.lpMinimumApplicationAddress;
-            long* endAdr=(long*)sysinfo.lpMaximumApplicationAddress;
+            //DWORD pageSize = sysinfo.dwPageSize;
+            void* startAdr=(void*)sysinfo.lpMinimumApplicationAddress;
+            void* endAdr=(void*)sysinfo.lpMaximumApplicationAddress;
+
+            std::cout <<"Anfang: " << startAdr << std::endl;
+            std::cout <<"Ende: "<< endAdr << std::endl;
 
             //List of addr where vlaue was found
-            std::vector<LPVOID> addresses;
+            std::vector<int*> addresses;
+            MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
             //Here needs to start loop....
+            std::cout << "Start\t" << "Ende\t" <<"Alt. StartAdr"<<std::endl;
             while (startAdr < endAdr)
             {
+              
                 //Info about the momry pages used by the process
-                MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
                 SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, &lpBuffer, sizeof(lpBuffer));
+                
+                std::cout  << startAdr << "\t" << incPtrByBytes(startAdr, lpBuffer.RegionSize) << "\t" << lpBuffer.BaseAddress << std::endl;
+            
 
                 //Check if function failed
                 if (numOfBytesPage == 0)
@@ -92,40 +166,45 @@ bool processStuff(int selectedWin){
                 }
                 else
                 {
-                    LPVOID baseAddress = lpBuffer.BaseAddress;
                     SIZE_T regionSize = lpBuffer.RegionSize;
                     DWORD protection = lpBuffer.Protect; //access Protection
                     DWORD state = lpBuffer.State;        //State of page
                     //Check if rights to access data
-                    if (protection == PAGE_READONLY && state == MEM_COMMIT)
+                    if (protection == PAGE_READWRITE && state == MEM_COMMIT)
                     {
                         //Get data 
-                        DWORD* data = new DWORD[sizeof(regionSize)]; 
+                        byte* data= new byte[regionSize];
+                        memset(data, 0, sizeof(byte)*regionSize);
                         SIZE_T numOfBytesRead;
-                        int readSuccess = ReadProcessMemory(hndlProc, baseAddress, data, sizeof(regionSize), &numOfBytesRead);
-                        if(readSuccess!=0){
+                        int readSuccess = ReadProcessMemory(hndlProc, lpBuffer.BaseAddress, data, regionSize, &numOfBytesRead);
+                        if(readSuccess!=0 && numOfBytesRead>=4){
                             //search through data region for the number
-                            for(int i=0;i<numOfBytesRead; ++i){
-                                DWORD value = data[i];
+                            
+                            for(int position=0;position<(numOfBytesRead-(numOfBytesRead%4)); ++position){
+                                int value=*(int*)&data[position]; 
+                                //std::memcpy(&value, &data[position], sizeof(int)); //Alternatively, but more overhead
                                 
                                 //if searched value, then add to list
                                 if(value==10){
-                                    addresses.push_back((LPVOID)data[i]);
-                                    DWORD* data2 = new DWORD[sizeof(DWORD)];
-                                    SIZE_T numOfBytesRead2;
-                                    ReadProcessMemory(hndlProc, addresses.at(0), data2, sizeof(DWORD), &numOfBytesRead2);
+                                    addresses.push_back((int*)incPtrByBytes(startAdr, position)); 
+                                                              
                                 }
                             }
+                            
                         }
-                        free(data);
+                        delete[] data;
                     }
 
-                    //Adjust starting address
-                    startAdr += sizeof(regionSize);
+                    
                 }
+
+                //Adjust starting address
+                startAdr = incPtrByBytes(startAdr,lpBuffer.RegionSize);//(void*)tmp;
+ 
             }
             //After being done, close the handle
             CloseHandle(hndlProc);
+
         }
       
     }
@@ -142,10 +221,11 @@ BOOL ReadProcessMemory(
 ); */
 
 int main(){
+    
     std::cout << "MemScan - by Simon" << std::endl;
     //Create list of available windows
     createWindowsList();
-
+    
     //Let user choose window to scan
     int select=0;
     while(select==0){
@@ -162,13 +242,14 @@ int main(){
     //Read what value to search
 
     //Search for the value
-    processStuff(select);
+    scanFirstIteration(select);
+    //readOneValue(select);
 
     //Read new value
 
     //Write the new value
 
-    
+
     getch();
     return 0;
 }
