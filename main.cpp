@@ -211,13 +211,10 @@ bool scanFirstIteration(int selectedWin){
     return true;
 }
 
-template<typename T> void foo(T n){
-    std::cout << typeof(n). << std::endl;
-}
 
 
 int main(){
-    /*
+    
     std::cout << "MemScan - by Simon" << std::endl;
     //Create list of available windows
     createWindowsList();
@@ -244,15 +241,8 @@ int main(){
     //Read new value
 
     //Write the new value
-    */
-   foo(2);
-   foo((float)2);
-   foo((char)0xC);
-   foo("asd");
-   std::string s("SiMON");
-   foo((std::string)s);
-   foo((long)2);
     
+   
 
     getch();
     return 0;
