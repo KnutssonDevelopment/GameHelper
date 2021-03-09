@@ -16,11 +16,18 @@ class Scanner{
         //Search in selected window for given value
         static std::vector<int> FirstDataScan(VALUETYPE numberType,int number);
         //Create map with window handles and name
-        void createWindowsList(std::map<int, std::pair<HWND, std::string>>* listWinHndls);
+        void createWindowsList();
+        void printWindowList();
 
     private:
+        //Variables
+        std::map<int, std::pair<HWND, std::string>> m_listWinHndls;
 
+        //Functions
         template<typename UNIT>
         static std::vector<int> InitialValueScan(int selectedProcess, UNIT n);
         static std::vector<int> ReadRegion(int adr, int size, int value, int hdnl);
+
+        static BOOL callbackEnumWindows(HWND hndl, LPARAM param);
+        bool addWinHndlToList(HWND hndl);
 };

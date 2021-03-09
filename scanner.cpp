@@ -1,15 +1,43 @@
 #include "Headers/scanner.hpp"
 
-//Create Map with window handles
-void Scanner::createWindowsList(std::map<int, std::pair<HWND, std::string>>* listWinHndls){
+
+void Scanner::printWindowList(){
+   for(auto e: m_listWinHndls){
+        std::cout << e.first << ".) " << e.second.second << std::endl;
+    }
+}
+
+bool Scanner::addWinHndlToList(HWND hndl){
+    //Use handle to get the name of the window
+    int titleLength = GetWindowTextLength(hndl);
+    if(!IsWindowVisible(hndl) || titleLength==0) return true;
+    //TCHAR mystring[titleLength+1];
+    //TCHAR mystring[titleLength+1];
+    LPSTR mystring = new char[titleLength+1];
+    GetWindowTextA(hndl,mystring, titleLength+1);
+    
+    //Add pair to map
+    std::string s=mystring;
+    std::pair<HWND, std::string> values = std::make_pair(hndl, s);
+    
+    m_listWinHndls.insert(std::make_pair(m_listWinHndls.size()+1, values));
+    
+    return true;
+}
+
+//Callback for EnumWindows-Method
+BOOL Scanner::callbackEnumWindows(HWND hndl, LPARAM param){
+    Scanner* pScanner = reinterpret_cast<Scanner*>(param);
+    return pScanner->addWinHndlToList(hndl);
+}
+
+//Create Map with window handles, will be stored in m_listWinHndls
+void Scanner::createWindowsList(){
     std::cout << "List of Windows" << std::endl;
     //Use Window Handles
     LPARAM para;
-    EnumWindows(callbackEnumWindows, para);
+    EnumWindows(callbackEnumWindows, reinterpret_cast<LPARAM>(this));
 
-    for(auto e: *listWinHndls){
-        std::cout << e.first << ".) " << e.second.second << std::endl;
-    }
 }
 
 std::vector<int> Scanner::FirstDataScan(VALUETYPE numberType, int number){
