@@ -102,9 +102,11 @@ int main(){
     std::cin >> value;
         
     //Search for the value
-    Scanner::FirstDataScan(hndlWindow.first, Scanner::BYTE_4, value);
-    //readOneValue(select);
-
+    std::vector<int*> meineaddressen = Scanner::FirstDataScan(hndlWindow.first, Scanner::BYTE_4, value);
+    //Print the list
+    for(int* elem: meineaddressen){
+        std::cout << elem << std::endl;
+    }
     //Read new value
 
     //Write the new value

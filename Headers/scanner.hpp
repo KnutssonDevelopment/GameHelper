@@ -29,7 +29,7 @@ Thats why memcpy could be used to interpret data in the desired data type
         static std::vector<int*> FirstDataScan(HWND procID, VALUETYPE numberType,int number);
         //Create map with window handles and name
         static std::map<HWND, std::string> createWindowsList();
-        //void printWindowList();
+        
 
     private:
         //Variables
@@ -43,11 +43,10 @@ Thats why memcpy could be used to interpret data in the desired data type
         //Functions regarding scanning/reading memory
         template<typename UNIT>
         static std::vector<int*> InitialValueScan(HWND selectedWindowHndl, int pValue);
-
-        //static void ReadRegion(const int* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses);
-        static void ReadRegion();
+        static void ReadRegion(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses);
         static void* incPtrByBytes(const void* adr, unsigned long long numOfBytes);
 
+        //Used to get some kind of process/window list
         static BOOL callbackEnumWindows(HWND hndl, LPARAM param);
         bool addWinHndlToList(HWND hndl);
 };

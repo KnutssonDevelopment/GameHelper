@@ -56,7 +56,7 @@ std::vector<int*> Scanner::FirstDataScan(HWND procID, VALUETYPE numberType, int 
         case FPN: return tmp;break;
         case DFPN: return tmp;break;
     }*/
-    return InitialValueScan<int>(procID, (int)number);;
+    return InitialValueScan<int>(procID, (int)number);
 }
 
 
@@ -94,20 +94,23 @@ std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue)
             void* startAdr=(void*)sysinfo.lpMinimumApplicationAddress;
             void* endAdr=(void*)sysinfo.lpMaximumApplicationAddress;
 
-            std::cout <<"Anfang: " << startAdr << std::endl;
-            std::cout <<"Ende: "<< endAdr << std::endl;
+            //DEBUG
+            //std::cout <<"Anfang: " << startAdr << std::endl;
+           // std::cout <<"Ende: "<< endAdr << std::endl;
 
            
             MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
             //Here needs to start loop....
-            std::cout << "Start\t" << "Ende\t" <<"Alt. StartAdr"<<std::endl;
+            //DEBUG
+            //std::cout << "Start\t" << "Ende\t" <<"Alt. StartAdr"<<std::endl;
             while (startAdr < endAdr)
             {
               
                 //Info about the momry pages used by the process
                 SIZE_T numOfBytesPage = VirtualQueryEx(hndlProc, startAdr, &lpBuffer, sizeof(lpBuffer));
                 
-                std::cout  << startAdr << "\t" << incPtrByBytes(startAdr, lpBuffer.RegionSize) << "\t" << lpBuffer.BaseAddress << std::endl;
+                //DEBUG
+                //std::cout  << startAdr << "\t" << incPtrByBytes(startAdr, lpBuffer.RegionSize) << "\t" << lpBuffer.BaseAddress << std::endl;
             
 
                 //Check if function failed
@@ -126,7 +129,7 @@ std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue)
                     if (protection == PAGE_READWRITE && state == MEM_COMMIT)
                     {
                         //Read a give region of memory
-                        ReadRegion();
+                        ReadRegion(startAdr, regionSize, pValue, hndlProc, addresses);
                         
                     }
 
@@ -153,8 +156,8 @@ void* Scanner::incPtrByBytes(const void* adr, unsigned long long numOfBytes){
     return (void*)tmp;
 }
 
-void Scanner::ReadRegion()
-{/*
+void Scanner::ReadRegion(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses)
+{
     //Get data
     byte *data = new byte[pSize];
     memset(data, 0, sizeof(byte) * pSize);
@@ -172,9 +175,9 @@ void Scanner::ReadRegion()
             //if searched value, then add to list
             if (value == pValue)
             {
-                //pAddresses.push_back((int *)incPtrByBytes(pAddr, position));
+                pAddresses.push_back((int *)incPtrByBytes(pAddr, position));
             }
         }
     }
-    delete[] data;*/
+    delete[] data;
 }
