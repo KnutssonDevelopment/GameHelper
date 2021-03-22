@@ -63,7 +63,7 @@ std::vector<int*> Scanner::FirstDataScan(HWND procID, VALUETYPE numberType, int 
 template<typename UNIT>
 std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue){
     
-     //List of addr where pValue was found
+    //List of addr where pValue was found
     std::vector<int*> addresses;
 
     //Continue only if window is active(savety check)
@@ -81,7 +81,7 @@ std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue)
         HANDLE hndlProc;
         hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
         if(hndlProc == NULL){
-            std::cout << "Gettingg the handle failed."<< std::endl;
+            std::cout << "Getting the handle failed."<< std::endl;
         }else{
             //Work within process
 
@@ -98,9 +98,8 @@ std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue)
             //std::cout <<"Anfang: " << startAdr << std::endl;
            // std::cout <<"Ende: "<< endAdr << std::endl;
 
-           
             MEMORY_BASIC_INFORMATION lpBuffer; //page info that is returned
-            //Here needs to start loop....
+           
             //DEBUG
             //std::cout << "Start\t" << "Ende\t" <<"Alt. StartAdr"<<std::endl;
             while (startAdr < endAdr)
@@ -129,7 +128,7 @@ std::vector<int*> Scanner::InitialValueScan(HWND selectedWindowHndl, int pValue)
                     if (protection == PAGE_READWRITE && state == MEM_COMMIT)
                     {
                         //Read a give region of memory
-                        ReadRegion(startAdr, regionSize, pValue, hndlProc, addresses);
+                        ReadAddressRange(startAdr, regionSize, pValue, hndlProc, addresses);
                         
                     }
 
@@ -156,7 +155,7 @@ void* Scanner::incPtrByBytes(const void* adr, unsigned long long numOfBytes){
     return (void*)tmp;
 }
 
-void Scanner::ReadRegion(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses)
+void Scanner::ReadAddressRange(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses)
 {
     //Get data
     byte *data = new byte[pSize];
@@ -180,4 +179,63 @@ void Scanner::ReadRegion(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHd
         }
     }
     delete[] data;
+}
+
+bool Scanner::RescanAddressList(HWND selectedWinHndl, VALUETYPE numberType, int aNumber, std::vector<int*> &aAddresses){
+
+    //Continue only if list has items(addresses)
+    if(aAddresses.size()==0)
+        return false;
+
+    if(selectedWinHndl==NULL){
+        std::cout << "No Window with that name found" << std::endl;
+
+    }else{
+        //get process id, used to access process
+        DWORD procId;
+        GetWindowThreadProcessId(selectedWinHndl, &procId);       
+        
+        HANDLE hndlProc;
+        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
+        if(hndlProc == NULL){
+            std::cout << "Getting the handle failed."<< std::endl;
+        }else{
+            //Work within process
+
+            //Contains information about the current computer system.(processor/page size/other) 
+            //Used to determine first nad last used address in memory (lpMinimumApplicationAddress/lpMaximumApplicationAddress)
+            SYSTEM_INFO sysinfo;
+            GetSystemInfo(&sysinfo);
+        
+            void* currentAddress=(void*)aAddresses.at(0);            
+     
+            int listIdx=0;
+            while (listIdx < aAddresses.size())
+            {
+                std::vector<int*> tmpList;
+                //Read a give address in memory
+                ReadAddressRange(currentAddress, sizeof(int), aNumber, hndlProc, tmpList);
+
+                //Check return
+                if(tmpList.size()==0){
+                    //address was not put in List due to value not being the new value
+                    //meaning the address does not store the search address which stores the our vlaue
+                    //removing item from list, keeping listindex at same position
+                    aAddresses.erase(aAddresses.begin()+listIdx);
+                }else{
+                    //move index to next item
+                    listIdx++;
+                }
+
+                //Adjust starting address
+                currentAddress = (void *)aAddresses.at(listIdx);
+            }
+            //After being done, close the handle
+            CloseHandle(hndlProc);
+
+        }
+      
+    }
+    //true if list was succesfully updated
+    return true;
 }

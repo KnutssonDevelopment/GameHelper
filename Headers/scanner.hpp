@@ -3,6 +3,7 @@
 #include <map>
 #include <iostream>
 
+//-lpsapi => needs to be added to build cmd
 class Scanner{
 /*
 Information/SampleCode for process memery handeling (in C#)
@@ -27,6 +28,8 @@ Thats why memcpy could be used to interpret data in the desired data type
 
         //Search in selected window for given value
         static std::vector<int*> FirstDataScan(HWND procID, VALUETYPE numberType,int number);
+        //Search list of addresses if value is equals to new value
+        static bool RescanAddressList(HWND selectedWinHndl, VALUETYPE numberType, int number, std::vector<int*> &aAddresses);
         //Create map with window handles and name
         static std::map<HWND, std::string> createWindowsList();
         
@@ -43,8 +46,9 @@ Thats why memcpy could be used to interpret data in the desired data type
         //Functions regarding scanning/reading memory
         template<typename UNIT>
         static std::vector<int*> InitialValueScan(HWND selectedWindowHndl, int pValue);
-        static void ReadRegion(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses);
-        static void* incPtrByBytes(const void* adr, unsigned long long numOfBytes);
+        static void ReadAddressRange(const void* pAddr, SIZE_T pSize, int pValue, HANDLE pHdnl, std::vector<int*> &pAddresses);
+        static void* incPtrByBytes(const void* adr, unsigned long long numOfBytes); //HelperFnct
+        
 
         //Used to get some kind of process/window list
         static BOOL callbackEnumWindows(HWND hndl, LPARAM param);

@@ -9,59 +9,6 @@
 #include "Headers/scanner.hpp"
 
 
-
-
-/*
-//Test reading ability of one address(will be modified and reused later)
-void readOneValue(int selectedWin){
-    int* adr = (int*)0x00747778;
-    
-
-    //Continue only if list has items
-    if(mapWinHndls.size()==0)
-        return;
-
-    //Window handle, used to get process id
-    HWND hndlWindow = mapWinHndls[selectedWin].first;
-    if(hndlWindow==NULL){
-        std::cout << "No Window with that name found" << std::endl;
-
-    }else{
-        //get process id, used to access process
-        DWORD procId;
-        GetWindowThreadProcessId(hndlWindow, &procId);       
-        
-        HANDLE hndlProc;
-        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
-        if(hndlWindow == NULL){
-            std::cout << "Gettingg the handle failed."<< std::endl;
-        }else{
-            //Work within process
-
-            //Get data
-            int *data = new int();
-            memset(data, 0, sizeof(int));
-            SIZE_T numOfBytesRead;
-            int readSuccess = ReadProcessMemory(hndlProc, adr, data, sizeof(int), &numOfBytesRead);
-            if (readSuccess != 0 && numOfBytesRead > 0)
-            {
-                int value; //*data;
-                std::memcpy(&value, &data[0], sizeof(int)); 
-                std::cout << "memcpy: " << value << std::endl;
-                
-            }
-            delete[] data;
-
-            //After being done, close the handle
-            CloseHandle(hndlProc);
-           
-        }
-      
-    }
-    
-}
-*/
-
 int main(){
     
     std::cout << "MemScan - by Simon" << std::endl;
