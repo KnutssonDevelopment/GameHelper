@@ -207,11 +207,15 @@ bool Scanner::RescanAddressList(HWND selectedWinHndl, VALUETYPE numberType, int 
             SYSTEM_INFO sysinfo;
             GetSystemInfo(&sysinfo);
         
-            void* currentAddress=(void*)aAddresses.at(0);            
+            void* currentAddress;//=(void*)aAddresses.at(0);            
      
             int listIdx=0;
-            while (listIdx < aAddresses.size())
+            do
             {
+                //Adjust starting address  
+                currentAddress = (void*)aAddresses.at(listIdx);
+
+                //Temp storage for value
                 std::vector<int*> tmpList;
                 //Read a give address in memory
                 ReadAddressRange(currentAddress, sizeof(int), aNumber, hndlProc, tmpList);
@@ -227,9 +231,9 @@ bool Scanner::RescanAddressList(HWND selectedWinHndl, VALUETYPE numberType, int 
                     listIdx++;
                 }
 
-                //Adjust starting address
-                currentAddress = (void *)aAddresses.at(listIdx);
-            }
+                
+               // std::cout << listIdx << std::endl;
+            }while(listIdx < aAddresses.size());
             //After being done, close the handle
             CloseHandle(hndlProc);
 

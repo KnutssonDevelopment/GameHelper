@@ -45,7 +45,7 @@ int main(){
     
     //Read what value to search
     int value=10;
-    std::cout << "What number to choose? ";
+    std::cout << "What number to choose? \n";
     std::cin >> value;
         
     //Search for the value
@@ -55,7 +55,18 @@ int main(){
         std::cout << elem << std::endl;
     }
     //Read new value
+    value=9;
+    std::cout << "What number to choose? \n";
+    std::cin >> value;
 
+    //Rescan new found addresses
+    Scanner::RescanAddressList(hndlWindow.first, Scanner::BYTE_4, value, meineaddressen);
+        //Print the list
+    for(int* elem: meineaddressen){
+        std::cout << elem << std::endl;
+    }
+    
+    
     //Write the new value
     
    
