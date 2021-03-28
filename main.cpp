@@ -11,9 +11,10 @@
 
 int main(){
     
+    Scanner<int>& myScanner = Scanner<int>::Instance();
     std::cout << "MemScan - by Simon" << std::endl;
     //Create list of available windows
-    std::map<HWND, std::string> listOfWin = Scanner::createWindowsList();
+    std::map<HWND, std::string> listOfWin = myScanner.createWindowsList();
     //Output the list
     std::cout << "Position\t" << "PID\t"<< "Name" << std::endl; 
     for(std::map<HWND, std::string>::iterator it=listOfWin.begin(); it != listOfWin.end(); ++it){
@@ -49,7 +50,7 @@ int main(){
     std::cin >> value;
         
     //Search for the value
-    std::vector<int*> meineaddressen = Scanner::FirstDataScan(hndlWindow.first, Scanner::BYTE_4, value);
+    std::vector<int*> meineaddressen = myScanner.FirstDataScan(hndlWindow.first, Scanner<int>::BYTE_4, value);
     //Print the list
     for(int* elem: meineaddressen){
         std::cout << elem << std::endl;
@@ -60,7 +61,7 @@ int main(){
     std::cin >> value;
 
     //Rescan new found addresses
-    Scanner::RescanAddressList(hndlWindow.first, Scanner::BYTE_4, value, meineaddressen);
+    myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_1, value, meineaddressen);
         //Print the list
     for(int* elem: meineaddressen){
         std::cout << elem << std::endl;
