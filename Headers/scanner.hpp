@@ -29,9 +29,13 @@ Thats why memcpy could be used to interpret data in the desired data type
         static Scanner& Instance();
 
         //Search in selected window for given value
-        std::vector<int*> FirstDataScan(HWND procID, VALUETYPE numberType, UNIT number);
+        std::vector<int*> FirstDataScan(HWND prselectedWinHndlocID, VALUETYPE numberType, UNIT number);
         //Further scan the vales from the address list, reference to aAddresses will be changed 
         void NextDataScan(HWND selectedWinHndl, VALUETYPE numberType, UNIT number, std::vector<int*> &aAddresses);
+
+        //Write to one address in memory of a program
+        void WriteToProcessMemory(HWND selectedWinHndl, void* aAddress, UNIT value);
+
         //Create map with window handles and name
         static std::map<HWND, std::string> createWindowsList();
         
@@ -49,7 +53,9 @@ Thats why memcpy could be used to interpret data in the desired data type
         std::vector<int *> InitialValueScan(HWND selectedWindowHndl, UNIT pValue);
         //Search list of addresses if value is equals to new value
         bool RescanAddressList(HWND selectedWinHndl, UNIT number, std::vector<int *> &aAddresses);
+        //Read address range for certain value
         void ReadAddressRange(const void *pAddr, SIZE_T pSize, UNIT pValue, HANDLE pHdnl, std::vector<int *> &pAddresses);
+
         
         //Helper functions
         static void *incPtrByBytes(const void *adr, unsigned long long numOfBytes); //HelperFnct
@@ -296,7 +302,7 @@ bool Scanner<UNIT>::RescanAddressList(HWND selectedWinHndl, UNIT aNumber, std::v
         GetWindowThreadProcessId(selectedWinHndl, &procId);       
         
         HANDLE hndlProc;
-        hndlProc = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION , false, procId);
+        hndlProc = OpenProcess(PROCESS_VM_READ , false, procId);
         if(hndlProc == NULL){
             std::cout << "Getting the handle failed."<< std::endl;
         }else{
@@ -342,4 +348,38 @@ bool Scanner<UNIT>::RescanAddressList(HWND selectedWinHndl, UNIT aNumber, std::v
     }
     //true if list was succesfully updated
     return true;
+}
+
+template<typename UNIT>
+void Scanner<UNIT>::WriteToProcessMemory(HWND selectedWinHndl, void* aAddress, UNIT aValue){
+
+
+    if(selectedWinHndl==NULL){
+        std::cout << "No Window with that name found" << std::endl;
+
+    }else{
+        //get process id, used to access process
+        DWORD procId;
+        GetWindowThreadProcessId(selectedWinHndl, &procId);
+
+        HANDLE hndlProc;
+        hndlProc = OpenProcess(PROCESS_VM_WRITE | PROCESS_VM_OPERATION, false, procId);
+        if (hndlProc == NULL)
+        {
+            std::cout << "Getting the handle failed." << std::endl;
+        }
+        else
+        {
+            SIZE_T numBytesWritten;
+   
+            bool writeSuccess = WriteProcessMemory(hndlProc, aAddress, &aValue, sizeof(aValue), &numBytesWritten);
+            if(writeSuccess){
+                std::cout << "Number was writen to memory." << std::endl;
+            }else{
+                std::cout << "Writing to memory failed. " << numBytesWritten << " Bytes."  << std::endl;
+            }
+            
+        }
+    }
+    
 }

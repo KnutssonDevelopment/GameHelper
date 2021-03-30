@@ -62,15 +62,34 @@ int main(){
 
     //Rescan new found addresses
     myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_1, value, meineaddressen);
-        //Print the list
+    //Print the list
     for(int* elem: meineaddressen){
         std::cout << elem << std::endl;
     }
-    
-    
+
+    while (meineaddressen.size() > 1)
+    {
+
+        //Read new value
+        value = 9;
+        std::cout << "What number to choose? \n";
+        std::cin >> value;
+
+        //Rescan new found addresses
+        myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_1, value, meineaddressen);
+        //Print the list
+        for (int *elem : meineaddressen)
+        {
+            std::cout << elem << std::endl;
+        }
+    }
+
     //Write the new value
-    
-   
+    //Read new value
+    value = 0;
+    std::cout << "What number to change to? \n";
+    std::cin >> value;
+    myScanner.WriteToProcessMemory(hndlWindow.first, meineaddressen.at(0), value);
 
     getch();
     return 0;
