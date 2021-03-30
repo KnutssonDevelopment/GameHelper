@@ -61,7 +61,7 @@ int main(){
     std::cin >> value;
 
     //Rescan new found addresses
-    myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_1, value, meineaddressen);
+    myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_4, value, meineaddressen);
     //Print the list
     for(int* elem: meineaddressen){
         std::cout << elem << std::endl;
@@ -76,7 +76,7 @@ int main(){
         std::cin >> value;
 
         //Rescan new found addresses
-        myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_1, value, meineaddressen);
+        myScanner.NextDataScan(hndlWindow.first, Scanner<int>::BYTE_4, value, meineaddressen);
         //Print the list
         for (int *elem : meineaddressen)
         {
