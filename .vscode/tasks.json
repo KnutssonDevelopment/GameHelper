@@ -9,7 +9,7 @@
                // "${file}",
                 "${workspaceFolder}\\**.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "${workspaceRoot}\\MemoryScanner.exe",
                 "-lpsapi"
             ],
             "options": {
